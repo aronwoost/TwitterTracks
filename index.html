@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>TwitterTracks</title>
+
+	<link rel="stylesheet" href="sp://import/css/adam.css">
+	<link rel="stylesheet" href="sp://import/css/shared.css">
+	<link rel="stylesheet" href="sp://import/css/core-dark.css">
+	<link rel="stylesheet" href="sp://import/css/api.css">
+
+	<script src="jquery-1.7.1.min.js"></script>
+
+	<script type="text/javascript">
+		
+		$(document).ready(function(){
+			sp = getSpotifyApi(1); 
+			sp.require('main').init();
+		});
+
+	</script>
+</head>
+<body>
+	<div>
+		<h1>TwitterTracks</h1>
+	</div>
+	<div id="content"></div>
+</body>
+</html>

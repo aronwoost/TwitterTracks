@@ -1,0 +1,12 @@
+*.pem
+*.tmproj
+*sublime*
+tmtags
+.ftpssh_settings
+.DS_Store?
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+.DS_Store
+settings.js
