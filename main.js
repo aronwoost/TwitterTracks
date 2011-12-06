@@ -3,15 +3,10 @@ exports.init = init;
 
 var models = sp.require("sp://import/scripts/api/models");
 var views = sp.require("sp://import/scripts/api/views");
-var settings = sp.require("settings");
-
-console.dir(settings);
 
 var currentSinceId;
 
 function init() {
-	console.log("init()");
-
 	var playlist = new models.Playlist("TwitterTracks");
 	playlist.subscribed = false;
 
@@ -26,11 +21,11 @@ function init() {
 function fetchTweetsAndAddToPlaylist(playlist) {
 	searchTwitter(function(uriArray){
 		if(uriArray.length === 0) {
-			setTimeout(fetchTweetsAndAddToPlaylist, 5000, playlist);
+			setTimeout(fetchTweetsAndAddToPlaylist, 10000, playlist);
 			return;
 		}
 	    addToPlaylist(playlist, uriArray, 0, function(){
-	    	setTimeout(fetchTweetsAndAddToPlaylist, 5000, playlist);
+	    	setTimeout(fetchTweetsAndAddToPlaylist, 10000, playlist);
 	    });
 	});
 }
@@ -57,7 +52,7 @@ function processTweets(data, callback) {
 		callback([]);
 		return;
 	}
-
+	
 	currentSinceId = data[0].id_str;
 
 	var arr = data.filter(function(item, index, array){

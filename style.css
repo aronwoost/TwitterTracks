@@ -1,0 +1,19 @@
+.sp-list {
+	max-height: 100%;
+}
+
+#content {
+	position: absolute; 
+	top: 75px; 
+	bottom: 0px; 
+	width: 100%; 
+	overflow: auto; 	
+}
+
+#header {
+	padding:10px;
+}
+
+#header a {
+	text-decoration: underline;
+}
