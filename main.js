@@ -3,6 +3,7 @@ exports.init = init;
 
 var models = sp.require("sp://import/scripts/api/models");
 var views = sp.require("sp://import/scripts/api/views");
+var settings = sp.require("settings");
 
 var currentSinceId;
 
@@ -24,7 +25,7 @@ function fetchTweetsAndAddToPlaylist(playlist) {
 			setTimeout(fetchTweetsAndAddToPlaylist, 10000, playlist);
 			return;
 		}
-	    addToPlaylist(playlist, uriArray, 0, function(){
+	    addToPlaylist(playlist, uriArray, function(){
 	    	setTimeout(fetchTweetsAndAddToPlaylist, 10000, playlist);
 	    });
 	});
@@ -55,39 +56,64 @@ function processTweets(data, callback) {
 	
 	currentSinceId = data[0].id_str;
 
-	var arr = data.filter(function(item, index, array){
-		if(!item.entities.urls || item.entities.urls.length === 0) return false;
-		var url = item.entities.urls[0].expanded_url;
-		if(!url) return false;
-		return url.indexOf("open.spotify.com") !== -1;
-	}).map(function(item){
+	// create a new array with the url's only
+	var arr = data.map(function(item){
 		return item.entities.urls[0].expanded_url;
 	});
 
-	console.log("Stats: "+data.length+" tweets, "+arr.length+" contained spotify links");
-
-	callback(arr);
+	// check the url's
+	async.map(arr, function(item, callback){
+		if(item.indexOf("open.spotify.com") !== -1) {
+			callback(null, item);
+		} else if(item.indexOf("spoti.fi") !== -1) {
+			$.ajax({
+				type: "GET",
+				url: "http://api.bitly.com/v3/expand?shortUrl="+encodeURIComponent(item)+"&login="+settings.bitlyUsername+"&apiKey="+settings.bitlyApiKey,
+				dataType: "jsonp",
+				success: function (data) {	
+					if(!data.data || data.data.expand[0].error) {
+						console.log("bit.ly url not found");
+						callback(null, "none");
+					} else {
+						var longUrl = data.data.expand[0].long_url;
+						callback(null, longUrl);
+					}
+				},
+				error: function() {
+					console.log("bit.ly error");
+					callback(null, "none");
+				}
+			});		
+		} else {
+			console.log("none spotify: "+item);
+			callback(null, "none");
+		}
+	}, function(err, results){
+		// remove the "none" once
+		var arr = results.filter(function(item, index, array){
+			return item !== "none";
+		});
+		console.log("Stats: "+data.length+" tweets, "+arr.length+" contained spotify links");
+		callback(arr);
+	});
 }
 
-function addToPlaylist(playlist, uriArray, index, callback) {
-    processUri(playlist, uriArray, index, function(){
-    	if(++index === uriArray.length) {
-    		callback();
-	    	return;
-	    }
-    	addToPlaylist(playlist, uriArray, index, callback);
-    });
+function addToPlaylist(playlist, uriArray, callback) {
+	async.forEachSeries(uriArray, function(item, callback){
+		processUri(item, playlist, callback);
+	}, function(err){
+		callback();
+	});		
 };
 
-function processUri(playlist, uriArray, index, callback) {
-	var uri = uriArray[index];
+function processUri(uri, playlist, callback) {
 	var type = models.Link.getType(uri);
 	if(type === 4) { //track
 		var track = models.Track.fromURI(uri, function(a) {
 			if(a.data.availableForPlayback) {
 			    playlist.add(a);
 			}
-		    callback(type);
+		    callback();
 		});		
 	} else if(type === 2) { //album
 		var album = models.Album.fromURI(uri, function(a){
@@ -97,9 +123,9 @@ function processUri(playlist, uriArray, index, callback) {
 				    playlist.add(o);
 				}
 			});
-			callback(type);
+			callback();
 		});
 	} else {
-		callback(type);
+		callback();
 	}
 }

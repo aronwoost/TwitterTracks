@@ -10,6 +10,7 @@
 		"en"
 	],
 	"RequiredPermissions": [
-		"http://search.twitter.com"
+		"http://search.twitter.com",
+		"http://api.bitly.com/"
 	]
 }
