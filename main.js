@@ -8,7 +8,7 @@ var settings = sp.require("settings");
 var currentSinceId;
 
 function init() {
-	var playlist = new models.Playlist("TwitterTracks");
+	var playlist = new models.Playlist();
 	playlist.subscribed = false;
 
     var listView = new views.List(playlist);
@@ -42,14 +42,18 @@ function searchTwitter(callback) {
 		type: "GET",
 		url: reqUrl,
 		dataType: "jsonp",
+		timeout : 5000,
 		success: function(data){
 			processTweets(data.results, callback);
+		},
+		error: function(){
+			callback([]);
 		}
 	});
 }
 
 function processTweets(data, callback) {
-	if(data.length === 0) {
+	if(!data || data.length === 0) {
 		callback([]);
 		return;
 	}
@@ -58,12 +62,17 @@ function processTweets(data, callback) {
 
 	// create a new array with the url's only
 	var arr = data.map(function(item){
+		if(!item.entities || !item.entities.urls) {
+			return "none";
+		}
 		return item.entities.urls[0].expanded_url;
 	});
 
 	// check the url's
 	async.map(arr, function(item, callback){
-		if(item.indexOf("open.spotify.com") !== -1) {
+		if(!item) { //TODO why are the items sometimes undefined?
+			callback(null, "none");
+		} else if(item.indexOf("open.spotify.com") !== -1) {
 			callback(null, item);
 		} else if(item.indexOf("spoti.fi") !== -1) {
 			$.ajax({
